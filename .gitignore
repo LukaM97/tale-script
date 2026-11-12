@@ -1,0 +1,49 @@
+# ==========================
+# Visual Studio / IDEs
+# ==========================
+.vs/
+*.user
+*.userosscache
+*.suo
+.cache
+
+# ==========================
+# .NET Build Outputs & Caches
+# ==========================
+[Bb]in/
+[Oo]bj/
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# NuGet Packages
+*.nupkg
+# Uncomment the line below if you prefer to exclude packages folder completely (though usually restored via dotnet restore)
+# packages/
+**/generated_code/
+
+# ==========================
+# VS Code (if you use it)
+# ==========================
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# ==========================
+# Operating System Files
+# ==========================
+# Windows
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Linux
+*~
+.directory
