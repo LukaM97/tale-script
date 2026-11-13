@@ -14,6 +14,17 @@ namespace TaleScript
         private int current = 0;
         private int line = 1;
 
+        private static readonly Dictionary<string, TokenType> Keywords = new() {
+            { "SAY", TokenType.KeywordSay },
+            { "CHOICE", TokenType.KeywordChoice },
+            { "SET", TokenType.KeywordSet },
+            { "GOTO", TokenType.KeywordGoto },
+            { "IF", TokenType.KeywordIf },
+            { "ELSE", TokenType.KeywordElse },
+            { "HINT", TokenType.KeywordHint },
+            { "BACK", TokenType.KeywordBack }
+        };
+
         public Scanner(string source)
         {
             source_ = source;
@@ -31,81 +42,86 @@ namespace TaleScript
             return tokens_;
         }
 
-        private bool IsAtEnd()
-        {
-            return current >= source_.Length;
-        }
-
-
-        private string Advance()
-        {
-            while (!IsAtEnd() && char.IsWhiteSpace(source_[current]))
-            {
-                if (source_[current] == '\n') line++;
-                current++;
-            }
-
-            // Update start to the beginning of the actual word/token
-            start = current;
-
-            if (IsAtEnd()) return "";
-
-            // 2. If it's a standalone symbol like '=', return it immediately
-            if (source_[current] == '=')
-            {
-                current++;
-                return "=";
-            }
-
-            // 3. Otherwise, read characters until we hit whitespace or '='
-            while (!IsAtEnd() && !char.IsWhiteSpace(source_[current]) && source_[current] != '=')
-            {
-                current++;
-            }
-
-            return source_.Substring(start, current - start);
-        }
-
-        private char Peek()
-        {
-            if (IsAtEnd()) return '\0';
-            return source_[current];
-        }
-
-        private bool Match(char expected)
-        {
-            if (IsAtEnd()) return false;
-            if (source_[current] != expected) return false;
-
-            current++;
-            return true;
-        }
-
         private void AddToken(TokenType type)
         {
             AddToken(type, null);
         }
 
-        private void AddToken(TokenType type, object literal)
+        private char Peek() => IsAtEnd() ? '\0' : source_[current];
+        private bool IsAlpha(char c) => (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_';
+        private bool IsAlphaNumeric(char c) => IsAlpha(c) || (c >= '0' && c <= '9');
+        private char Advance() => source_[current++];
+        private bool IsAtEnd() => current >= source_.Length;
+        private void AddToken(TokenType type, object literal = null) =>
+            tokens_.Add(new Token(type, source_.Substring(start, current - start), literal,line));
+
+        private void Identifier()
         {
+            while (IsAlphaNumeric(Peek())) Advance();
             string text = source_.Substring(start, current - start);
-            tokens_.Add(new Token(type, text, literal, line));
+            string upper = text.ToUpper();
+            if (Keywords.TryGetValue(upper, out TokenType type))
+            {
+                AddToken(type, text);
+            }
+            else
+            {
+                AddToken(TokenType.Identifier, text);
+            }
+        }
+
+        private void StringLiteral()
+        {
+            while (Peek() != '"' && !IsAtEnd())
+            {
+                if (Peek() == '\n') line++;
+                Advance();
+            }
+            if (IsAtEnd())
+            {
+                Console.WriteLine($"[Line {line}] Greška: Nezavršen string.");
+                return;
+            }
+            Advance();
+            string value = source_.Substring(start + 1, current - start - 2);
+            AddToken(TokenType.StringLiteral, value);
+        }
+
+        private bool Match(char expected)
+        {
+            if (IsAtEnd() || source_[current] != expected) return false;
+            current++;
+            return true;
         }
 
         private void ScanToken()
         {
-            string c = Advance();
-            if (string.IsNullOrEmpty(c)) return;
-
+            char c = Advance();
             switch (c)
             {
-                case "SAY": AddToken(TokenType.KeywordSay); break;
-                case "CHOICE": AddToken(TokenType.KeywordChoice); break;
-                case "SET": AddToken(TokenType.KeywordSet); break;
-                case "GOTO": AddToken(TokenType.KeywordGoto); break;
-                case "->": AddToken(TokenType.Arrow); break;
-                case "=": AddToken(TokenType.Assign); break;
-                default: AddToken(TokenType.Identifier); break;
+                case ':': AddToken(TokenType.Colon); break;
+                case '-':
+                    if (Match('>')) AddToken(TokenType.Assign);
+                    break;
+                case '@':
+                    while (IsAlphaNumeric(Peek())) Advance();
+                    AddToken(TokenType.NodeId, source_.Substring(start + 1, current - start - 1));
+                    break;
+                case ' ':
+                case '\r':
+                case '\t': break;
+                case '\n': line++; break;
+                case '"': StringLiteral(); break;
+                case '/':
+                    if (Match('/'))
+                    {
+                        while (Peek() != '\n' && !IsAtEnd()) Advance();
+                    }
+                    break;
+                default:
+                    if (IsAlpha(c)) Identifier();
+                    else Console.WriteLine($"[Line {line}] Greška: Nepoznat karakter '{c}'.");
+                    break;
             }
         }
     }

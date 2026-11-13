@@ -13,6 +13,10 @@ namespace TaleScript
         KeywordChoice,
         KeywordGoto,
         KeywordSet,
+        KeywordIf,
+        KeywordElse,
+        KeywordHint,
+        KeywordBack,
 
         //Literals
         StringLiteral,
@@ -22,6 +26,7 @@ namespace TaleScript
         //Assigners
         Assign,
         Arrow,
+        Colon,
 
         EOF
     }

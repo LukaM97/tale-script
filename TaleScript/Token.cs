@@ -21,7 +21,7 @@ namespace TaleScript
 
         public override string ToString()
         {
-            return $"{Type} {Lexeme} {Literal}";
+            return $"Token type: {Type}, Lexeme: {Lexeme}";
         }
     }
 }
